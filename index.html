@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Pong</title>
+    <style>
+        /* This is the CSS. It just styles the game area. */
+        body {
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            background-color: #000;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+<script>
+    // This is the JavaScript, where all the game magic happens!
+
+    // === 1. SETUP ===
+    // Get the canvas element from the HTML and prepare it for 2D drawing.
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // === 2. DEFINE GAME OBJECTS & PROPERTIES ===
+    // These are like the "Objects" and "Properties" from your lesson plan.
+
+    // The Ball
+    const ball = {
+        x: canvas.width / 2,    // Starting x position
+        y: canvas.height / 2,   // Starting y position
+        size: 15,               // Width and height of the ball
+        dx: 5,                  // Speed in the x direction
+        dy: 5                   // Speed in the y direction
+    };
+
+    // The Player's Paddle
+    const player = {
+        x: 10,
+        y: canvas.height / 2 - 50,
+        width: 15,
+        height: 100,
+        score: 0
+    };
+
+    // The Computer's Paddle
+    const computer = {
+        x: canvas.width - 25,
+        y: canvas.height / 2 - 50,
+        width: 15,
+        height: 100,
+        score: 0
+    };
+
+    // === 3. DRAWING FUNCTIONS ===
+    // Functions to draw our game elements on the canvas.
+
+    // A generic function to draw a rectangle
+    function drawRect(x, y, w, h, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, w, h);
+    }
+
+    // A function to draw the text for the score
+    function drawText(text, x, y, color) {
+        ctx.fillStyle = color;
+        ctx.font = '45px sans-serif';
+        ctx.fillText(text, x, y);
+    }
+
+    // Function to draw the halfway line
+    function drawNet() {
+        for(let i = 0; i < canvas.height; i += 30) {
+            drawRect(canvas.width / 2 - 1, i, 2, 15, "white");
+        }
+    }
+
+
+    // === 4. PLAYER CONTROLS ===
+    // Move the player's paddle with the mouse
+    canvas.addEventListener('mousemove', movePaddle);
+
+    function movePaddle(evt) {
+        let rect = canvas.getBoundingClientRect();
+        player.y = evt.clientY - rect.top - player.height / 2;
+    }
+
+
+    // === 5. GAME LOGIC & MOVEMENT ===
+    // The "If-Then" logic from your lesson plan.
+
+    // Reset the ball to the center after a score
+    function resetBall() {
+        ball.x = canvas.width / 2;
+        ball.y = canvas.height / 2;
+        ball.dx = -ball.dx; // Change direction
+    }
+
+    // Check for collisions between the ball and a paddle
+    function collision(b, p) {
+        return b.x < p.x + p.width &&
+               b.x + b.size > p.x &&
+               b.y < p.y + p.height &&
+               b.y + b.size > p.y;
+    }
+
+    // This function updates everything's position and checks for rules.
+    function update() {
+        // Move the ball
+        ball.x += ball.dx;
+        ball.y += ball.dy;
+
+        // Simple computer AI: The computer paddle tries to follow the ball's y position
+        computer.y += (ball.y - (computer.y + computer.height / 2)) * 0.1;
+
+        // Ball collision with top and bottom walls
+        if (ball.y + ball.size > canvas.height || ball.y < 0) {
+            ball.dy = -ball.dy; // Reverse y direction
+        }
+
+        // Ball collision with paddles
+        let p = (ball.x < canvas.width / 2) ? player : computer;
+        if (collision(ball, p)) {
+            ball.dx = -ball.dx; // Reverse x direction
+        }
+
+        // Check for score
+        if (ball.x + ball.size < 0) {
+            // Computer scores
+            computer.score++;
+            resetBall();
+        } else if (ball.x > canvas.width) {
+            // Player scores
+            player.score++;
+            resetBall();
+        }
+    }
+
+
+    // === 6. THE GAME LOOP ===
+    // This is the main engine of the game, running over and over again.
+
+    function gameLoop() {
+        // 1. UPDATE GAME STATE (move things and check for rules)
+        update();
+
+        // 2. DRAW EVERYTHING
+        // Clear the canvas with a black rectangle
+        drawRect(0, 0, canvas.width, canvas.height, 'black');
+
+        // Draw the net
+        drawNet();
+
+        // Draw the scores
+        drawText(player.score, canvas.width / 4, canvas.height / 5, 'white');
+        drawText(computer.score, 3 * canvas.width / 4, canvas.height / 5, 'white');
+
+        // Draw the paddles and ball
+        drawRect(player.x, player.y, player.width, player.height, 'white');
+        drawRect(computer.x, computer.y, computer.width, computer.height, 'white');
+        drawRect(ball.x, ball.y, ball.size, ball.size, 'white');
+    }
+
+    // Start the game loop, running it 60 times per second.
+    const framePerSecond = 60;
+    setInterval(gameLoop, 1000 / framePerSecond);
+
+</script>
+
+</body>
+</html>
